@@ -8,7 +8,7 @@ from lega4e_library.asyncio.utils import maybeAwait
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import BotCommand, Message, CallbackQuery
 
-from tgui.src.domain import P, Pieces
+from tgui.src.domain.piece import P, Pieces
 from tgui.src.logging.logger_wrapper import TgLoggerWrapper
 from tgui.src.logging.tg_logger import TgLogger
 from tgui.src.managers.callback_query_manager import CallbackQueryManager, CallbackQueryIdentifier, CallbackSourceType

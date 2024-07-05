@@ -1,7 +1,7 @@
 from logging import Logger
 from typing import Callable, Union
 
-from tgui.src.domain import Pieces, provePiece
+from tgui.src.domain.piece import Pieces, provePiece
 from tgui.src.logging.tg_logger import TgLogger
 
 

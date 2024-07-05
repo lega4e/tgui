@@ -7,7 +7,10 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, \
   KeyboardButton, ReplyKeyboardMarkup
 
-from tgui.src.domain import ValidatorObject, TgDestination, Pieces, Validator, P, Emoji
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.emoji import Emoji
+from tgui.src.domain.piece import Pieces, P
+from tgui.src.domain.validators import ValidatorObject, Validator
 from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, CallbackSourceType, CallbackQueryAnswer, \
   CallbackQueryManager
 from tgui.src.mixin.executable import TgExecutableMixin

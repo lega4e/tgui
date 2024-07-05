@@ -8,7 +8,8 @@ from typing import Optional, List
 
 from telebot.async_telebot import AsyncTeleBot
 
-from tgui.src.domain import TgDestination, Pieces, P
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.piece import Pieces, P
 from tgui.src.logging.tg_logger_stream import TgLoggerStream
 
 

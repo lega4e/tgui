@@ -6,7 +6,8 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.asyncio_helper import ApiTelegramException
 from telebot.types import Message, InputMediaPhoto, InputMediaVideo, InputMediaAudio
 
-from tgui.src.domain import TgDestination, Pieces, proveTgDestination, provePiece
+from tgui.src.domain.destination import TgDestination, proveTgDestination
+from tgui.src.domain.piece import Pieces, provePiece
 from tgui.src.logging.tg_logger import TgLogger
 
 

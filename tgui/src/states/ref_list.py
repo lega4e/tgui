@@ -5,7 +5,8 @@ from lega4e_library.asyncio.utils import maybeAwait
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import Message
 
-from tgui.src.domain import TgDestination, Pieces
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.piece import Pieces
 from tgui.src.managers.callback_query_manager import CallbackQueryManager
 from tgui.src.states.branch import BranchButtonAction, BranchButton, BranchMessage
 from tgui.src.states.paging import TgPagingState

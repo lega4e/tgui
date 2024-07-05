@@ -7,7 +7,8 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardMarkup, \
   InlineKeyboardButton
 
-from tgui.src.domain import Pieces, TgDestination
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.piece import Pieces
 from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, CallbackSourceType, CallbackQueryAnswer, \
   CallbackQueryManager
 from tgui.src.mixin.tg_message_translate_mixin import TgTranslateToMessageMixin

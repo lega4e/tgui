@@ -5,7 +5,9 @@ from typing import Optional, List, Union, Any
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from tgui.src.domain import TgDestination, Pieces, P, Emoji
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.piece import Pieces, P
+from tgui.src.domain.emoji import Emoji
 from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, CallbackSourceType, CallbackQueryAnswer, \
   CallbackQueryManager
 from tgui.src.mixin.executable import TgExecutableMixin

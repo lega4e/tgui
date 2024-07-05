@@ -2,10 +2,10 @@ from abc import abstractmethod
 from copy import copy
 from typing import Callable, Union
 
+from lega4e_library.asyncio.utils import maybeAwait
 from telebot.types import Message
 
-from src.utils.tg.domain.piece import Pieces
-from src.utils.utils import maybeAwait
+from tgui.src.domain.piece import Pieces
 
 
 class ValidatorObject:

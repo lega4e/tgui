@@ -3,7 +3,7 @@ from typing import List, Any
 
 from telebot.async_telebot import AsyncTeleBot
 
-from tgui.src.domain import TgDestination
+from tgui.src.domain.destination import TgDestination
 
 
 class ChainStream:

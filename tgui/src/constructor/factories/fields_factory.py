@@ -3,7 +3,7 @@ from typing import Any
 from telebot.async_telebot import AsyncTeleBot
 
 from tgui.src.constructor.factories.validators_factory import TgValidatorsFactory
-from tgui.src.domain import TgDestination
+from tgui.src.domain.destination import TgDestination
 from tgui.src.managers.callback_query_manager import CallbackQueryManager
 
 

@@ -14,7 +14,8 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.types import CallbackQuery, Message, ReplyKeyboardMarkup, \
   ReplyKeyboardRemove, JsonSerializable
 
-from tgui.src.domain import TgDestination, Pieces
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.piece import Pieces
 from tgui.src.mixin.executable import TgExecutableMixin
 from tgui.src.utils.send_message import send_message
 

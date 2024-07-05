@@ -3,7 +3,7 @@ from typing import Optional, List, Union, Callable, Any, Coroutine
 from lega4e_library.asyncio.utils import maybeAwait
 from telebot.async_telebot import AsyncTeleBot
 
-from tgui.src.domain import TgDestination
+from tgui.src.domain.destination import TgDestination
 from tgui.src.managers.callback_query_manager import CallbackQueryManager
 from tgui.src.states.branch import BranchMessage, BranchButton
 from tgui.src.states.paging import TgPagingState

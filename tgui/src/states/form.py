@@ -5,7 +5,7 @@ from lega4e_library.asyncio.async_completer import AsyncCompleter, CompleterCanc
 from telebot.async_telebot import AsyncTeleBot
 
 from tgui.src.constructor.models.form import FormTgElement, FormTgCondition
-from tgui.src.domain import TgDestination
+from tgui.src.domain.destination import TgDestination
 from tgui.src.mixin.executable import TgExecutableMixin
 from tgui.src.states.tg_state import TgState
 from tgui.src.utils.calculate_tg_state import calculate_executable_state

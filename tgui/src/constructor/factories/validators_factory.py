@@ -5,9 +5,10 @@ from typing import Callable, Optional
 from telebot.async_telebot import AsyncTeleBot
 
 from tgui.src.constructor.models.validator_types import ValidatorDescription, ValidatorType
-from tgui.src.domain import Validator, ValidatorObject, Emoji, FunctionValidator
 from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.emoji import Emoji
 from tgui.src.domain.piece import Pieces, P
+from tgui.src.domain.validators import Validator, ValidatorObject, FunctionValidator
 from tgui.src.logging.tg_logger import TgLogger
 
 
