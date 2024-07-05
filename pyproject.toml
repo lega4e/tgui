@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tgui"
+version = "1.0.0"
+requires-python = ">= 3.9"
+description = "Wrapper of telebot"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["lega4e", "telegram", "telebot"]
+dependencies = [
+  "lega4e_library >= 0.0.1",
+  "pyTelegramBotAPI >= 4.20.0",
+]
+authors = [
+  {name = "Chersky", email = "lega4e@lega4e.ru"},
+]
+maintainers = [
+  {name = "Chersky", email = "lega4e@lega4e.ru"},
+]
+
+[project.urls]
+Repository = "https://github.com/lega4e/tgui.git"
+
