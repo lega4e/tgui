@@ -76,7 +76,7 @@ class TgStateBinder:
 @self._findUserDecorator
 def handle_{command.name}(user, m, __):
   if user is not None:
-    exec(f'self._task(user.{command.handler}(m))')
+    exec(f'asyncio.create_task(user.{command.handler}(m))')
       ''')
 
     @self._tg.message_handler(func=lambda m: m.text.startswith('/'))

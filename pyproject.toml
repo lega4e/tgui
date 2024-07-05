@@ -11,7 +11,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["lega4e", "telegram", "telebot"]
 dependencies = [
-  "lega4e_library >= 0.0.4",
+  "lega4e_library >= 0.0.5",
   "pyTelegramBotAPI >= 4.20.0",
 ]
 authors = [
