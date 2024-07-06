@@ -11,7 +11,8 @@ from telebot.types import BotCommand, Message, CallbackQuery
 from tgui.src.domain.piece import P, Pieces
 from tgui.src.logging.logger_wrapper import TgLoggerWrapper
 from tgui.src.logging.tg_logger import TgLogger
-from tgui.src.managers.callback_query_manager import CallbackQueryManager, CallbackQueryIdentifier, CallbackSourceType
+from tgui.src.managers.callback_query_manager import CallbackQueryManager, \
+  CallbackQueryIdentifier, CallbackSourceType
 from tgui.src.states.tg_state import TgState
 
 

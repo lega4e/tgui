@@ -1,7 +1,9 @@
+import enum
 from typing import List, Any
 
 
-class ValidatorType:
+@enum.unique
+class ValidatorType(enum.StrEnum):
   ERROR = 'error'
   STRING = 'string'
   INTEGER = 'integer'
@@ -11,6 +13,7 @@ class ValidatorType:
   LOCATION_TEXT = 'location_text'
   LOCATION = 'location'
   MESSAGE_WITH_TEXT = 'message_with_text'
+  MULTIPLE_CHOICE_COUNT = 'multiple_choice_count'
 
   @staticmethod
   def values() -> List[Any]:
@@ -32,14 +35,23 @@ class ValidatorDescription:
   def __init__(
     self,
     type: ValidatorType,
-    **kargs,
+    **kwargs,
   ):
     self.type = type
     if type == ValidatorType.INTEGER:
-      self.min = kargs.get('min', None)
-      self.max = kargs.get('max', None)
+      self.min = kwargs.get('min', None)
+      self.minErrorMessage = kwargs.get('minErrorMessage', None)
+      self.max = kwargs.get('max', None)
+      self.maxErrorMessage = kwargs.get('maxErrorMessage', None)
     elif type == ValidatorType.FLOAT:
-      self.min = kargs.get('min', None)
-      self.max = kargs.get('max', None)
+      self.min = kwargs.get('min', None)
+      self.minErrorMessage = kwargs.get('minErrorMessage', None)
+      self.max = kwargs.get('max', None)
+      self.maxErrorMessage = kwargs.get('maxErrorMessage', None)
+    elif type == ValidatorType.MULTIPLE_CHOICE_COUNT:
+      self.min = kwargs.get('min', None)
+      self.minErrorMessage = kwargs.get('minErrorMessage', None)
+      self.max = kwargs.get('max', None)
+      self.maxErrorMessage = kwargs.get('maxErrorMessage', None)
     elif type not in ValidatorType.values():
       raise ValueError(f'Invalid validator type: {type}')

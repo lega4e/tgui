@@ -1,20 +1,23 @@
-from typing import Any
+from typing import Any, Optional, Callable
 
 from telebot.async_telebot import AsyncTeleBot
 
-from tgui.src.constructor.factories.validators_factory import TgValidatorsFactory
+from tgui.src.constructor.factories.checks_factory import TgChecksFactory
+from tgui.src.constructor.models.form import FormTgItem
+from tgui.src.managers.callback_query_manager import CallbackQueryManager
+from tgui.src.constructor.factories.validators_factory import \
+  TgValidatorsFactory
 from tgui.src.constructor.models.choice import ChoiceTgItem
 from tgui.src.constructor.models.choice_button import ChoiceButton
-from tgui.src.constructor.models.form import FormTgItem
 from tgui.src.constructor.models.multiple_choice import MultipleChoiceTgItem
 from tgui.src.constructor.models.validated_item import ValidatedTgItem
 from tgui.src.constructor.models.yes_no import YesNoTgItem
-from tgui.src.domain.destination import TgDestination
-from tgui.src.managers.callback_query_manager import CallbackQueryManager
 from tgui.src.mixin.executable import TgExecutableMixin
 from tgui.src.states.form import TgFormState
 from tgui.src.states.input_field import TgInputField, InputFieldButton
-from tgui.src.states.multiple_choice import TgMultipleChoice, MultipleChoiceButton
+from tgui.src.states.multiple_choice import TgMultipleChoice, \
+  MultipleChoiceButton
+from tgui.src.domain.destination import TgDestination
 
 
 class TgInputFieldsFactory:
@@ -25,11 +28,15 @@ class TgInputFieldsFactory:
     destination: TgDestination,
     callbackManager: CallbackQueryManager,
     validators: TgValidatorsFactory,
+    checks: TgChecksFactory,
+    checkCustomCondition: Optional[Callable] = None,
   ):
     self.tg = tg
     self.destination = destination
     self.callbackManager = callbackManager
     self.validators = validators
+    self.checks = checks
+    self.checkCustomCondition = checkCustomCondition
 
   def get(self, item: Any) -> TgExecutableMixin:
     if isinstance(item, ValidatedTgItem):
@@ -40,6 +47,8 @@ class TgInputFieldsFactory:
       return self.choice(item)
     elif isinstance(item, MultipleChoiceTgItem):
       return self.multipleChoice(item)
+    elif isinstance(item, FormTgItem):
+      return self.form(item)
     else:
       raise ValueError(f'Unknown item type: {type(item)}')
 
@@ -65,14 +74,14 @@ class TgInputFieldsFactory:
       buttons=[
         [
           InputFieldButton(
-            title=item.yesTitle,
-            value=True,
-            answer=item.yesAnswer,
-          ),
-          InputFieldButton(
             title=item.noTitle,
             value=False,
             answer=item.noAnswer,
+          ),
+          InputFieldButton(
+            title=item.yesTitle,
+            value=True,
+            answer=item.yesAnswer,
           ),
         ],
       ],
@@ -94,6 +103,10 @@ class TgInputFieldsFactory:
     ).configureTgState(greeting=choice.greeting)
 
   def multipleChoice(self, choice: MultipleChoiceTgItem) -> TgMultipleChoice:
+    check = None
+    if choice.validator is not None:
+      check = self.checks.get(choice.validator)
+
     return TgMultipleChoice(
       tg=self.tg,
       destination=self.destination,
@@ -103,17 +116,20 @@ class TgInputFieldsFactory:
           lambda row: list(map(self.choiceButton2MultipleChoiceButton, row)),
           choice.buttons,
         )),
+      checkChoice=check,
     ).configureTgState(greeting=choice.greeting)
 
   def form(
     self,
     form: FormTgItem,
+    checkCustomCondition: Optional[Callable] = None,
   ) -> TgFormState:
     return TgFormState(
       tg=self.tg,
       destination=self.destination,
       fieldsFactory=self,
       elements=form.elements,
+      checkCustomCondition=checkCustomCondition or self.checkCustomCondition,
     )
 
   # SERVICE

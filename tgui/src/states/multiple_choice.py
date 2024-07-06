@@ -1,14 +1,16 @@
 import random
 
-from typing import Optional, List, Union, Any
+from typing import Optional, List, Union, Any, Callable
 
+from lega4e_library.asyncio.utils import maybeAwait
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from tgui.src.domain.destination import TgDestination
 from tgui.src.domain.piece import Pieces, P
 from tgui.src.domain.emoji import Emoji
-from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, CallbackSourceType, CallbackQueryAnswer, \
+from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, \
+  CallbackSourceType, CallbackQueryAnswer, \
   CallbackQueryManager
 from tgui.src.mixin.executable import TgExecutableMixin
 from tgui.src.mixin.tg_message_translate_mixin import TgTranslateToMessageMixin
@@ -31,11 +33,8 @@ class MultipleChoiceButton:
   ):
     """
     :param titleOn: Какой текст будет отображён на кнопке, когда элементы выбран
-    
     :param titleOff: какой текст будет отображён на кнопке, когда элемент не выбран
-    
     :param value: какое значение будет возвращено как "введённое"
-    
     :param answer: что будет отображено в инфо-шторке при нажатии на кнопку
     """
     self.titleOn = titleOn
@@ -83,20 +82,18 @@ class TgMultipleChoice(TgState, TgTranslateToMessageMixin, TgExecutableMixin):
     await self.translateMessage()
 
   def __init__(
-    self,
-    tg: AsyncTeleBot,
-    destination: TgDestination,
-    callbackManager: CallbackQueryManager,
-    buttons: List[List[MultipleChoiceButton]],
-    terminateMessage: Union[str, Pieces] = None,
+      self,
+      tg: AsyncTeleBot,
+      destination: TgDestination,
+      callbackManager: CallbackQueryManager,
+      buttons: List[List[MultipleChoiceButton]],
+      terminateMessage: Union[str, Pieces] = None,
+      checkChoice: Optional[Callable] = None,  # maybe async -> bool
   ):
     """
     :param tg: Телебот, используется для отправки сообщений
-    
     :param destination: чат, куда посылать приглашения к вводу или сообщение о прерванном вводе
-    
     :param terminateMessage: сообщение, отображающееся, когда ввод прерван
-    
     :param buttons: кнопки, с помощью которых человек может выбирать значение
     """
     TgState.__init__(self, tg=tg, destination=destination)
@@ -105,6 +102,7 @@ class TgMultipleChoice(TgState, TgTranslateToMessageMixin, TgExecutableMixin):
 
     self._callbackManager = callbackManager
     self._buttons = buttons
+    self._checkChoice = checkChoice
 
     self._terminateMessage = terminateMessage
     if isinstance(self._terminateMessage, str):
@@ -121,7 +119,7 @@ class TgMultipleChoice(TgState, TgTranslateToMessageMixin, TgExecutableMixin):
   def _makeKeyboardAction(self) -> Optional[KeyboardAction]:
     """
     Создаём разметку для кнопок
-    
+
     :return: Разметка для кнопок (если кнопки указаны)
     """
     markup = InlineKeyboardMarkup()
@@ -152,11 +150,20 @@ class TgMultipleChoice(TgState, TgTranslateToMessageMixin, TgExecutableMixin):
       async def action(_):
         if btn.isEndButton:
           data = self._collectData()
-          self.notify(event=TgMultipleChoice.ON_FIELD_ENTERED_EVENT, value=data)
-          await self.executableStateOnCompleted(data)
+          if (self._checkChoice is None or
+              await maybeAwait(self._checkChoice(data, end=True))):
+            self.notify(
+              event=TgMultipleChoice.ON_FIELD_ENTERED_EVENT,
+              value=data,
+            )
+            await self.executableStateOnCompleted(data)
         else:
           btn.isOn = not btn.isOn
-          await self.translateMessage()
+          if (self._checkChoice is not None and not await maybeAwait(
+              self._checkChoice(self._collectData(), end=False))):
+            btn.isOn = not btn.isOn
+          else:
+            await self.translateMessage()
         return True
 
       return action

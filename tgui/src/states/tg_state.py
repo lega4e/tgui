@@ -2,17 +2,18 @@
 import asyncio
 import enum
 from random import random
-from typing import Any, Optional, List, Tuple, Callable
+from typing import Any, Optional, List, Callable, Tuple
 
 from attr import define, field
 from attr.validators import instance_of
 from lega4e_library import Notifier
-from lega4e_library.asyncio.async_completer import CompleterCanceledException, AsyncCompleter
+from lega4e_library.asyncio.async_completer import CompleterCanceledException, \
+  AsyncCompleter
 from lega4e_library.asyncio.utils import maybeAwait
 from lega4e_library.attrs.jsonkin import jsonkin
 from telebot.async_telebot import AsyncTeleBot
-from telebot.types import CallbackQuery, Message, ReplyKeyboardMarkup, \
-  ReplyKeyboardRemove, JsonSerializable
+from telebot.types import JsonSerializable, Message, ReplyKeyboardMarkup, \
+  CallbackQuery, ReplyKeyboardRemove
 
 from tgui.src.domain.destination import TgDestination
 from tgui.src.domain.piece import Pieces
@@ -129,14 +130,16 @@ class TgState(Notifier):
   async def calcWithDeletion(
     self,
     fields: List[Tuple[str, Any]],  # TgInputField
-    onEntered: Callable,
+    onSuccess: Callable,
     remove: List[Message] = None,
   ):
+    from tgui.src.states.input_field import TgInputField
     remove = remove or []
     try:
       self.catchedMessages = remove
       values = {}
       for name, field in fields:
+        field: TgInputField
         field.configureTgState(
           greeting=field._greeting,
           silent=field._silent,
@@ -144,7 +147,7 @@ class TgState(Notifier):
         )
         values[name] = await self.calc(field)
         self.catchedMessages.extend(field.catchedMessages)
-      await maybeAwait(onEntered(**values))
+      await maybeAwait(onSuccess(**values))
 
     except CompleterCanceledException:
       pass
@@ -152,22 +155,6 @@ class TgState(Notifier):
     finally:
       [self.scheduleMessageDeletion(m, 0.0) for m in set(self.catchedMessages)]
       self.catchedMessages = []
-
-  async def calcFields(
-    self,
-    fields: List[Tuple[str, Any]],
-    onEntered: Callable,
-  ) -> bool:
-    try:
-      values = {}
-      for name, field in fields:
-        values[name] = await self.calc(field)
-        self.catchedMessages.extend(field.catchedMessages)
-      await maybeAwait(onEntered(**values))
-      return True
-
-    except CompleterCanceledException:
-      return False
 
   def scheduleMessageDeletion(
     self,
@@ -179,7 +166,7 @@ class TgState(Notifier):
 
     async def removeMessage():
       await asyncio.sleep(duration)
-      await self.delete(m)
+      await self.tg.delete_message(m.chat.id, m.message_id)
 
     asyncio.create_task(removeMessage())
 
@@ -215,6 +202,7 @@ class TgState(Notifier):
     Должно быть вызвано после выхода из состояния
     """
     self._tgStateData['preparedToFinish'] = True
+    await self._onFinishBeforeFinishSubstate(status)
     await self.finishSubstate(status)
     await self._onFinish(status)
     self.cancelCompleter()
@@ -373,6 +361,11 @@ class TgState(Notifier):
     Вызывается при старте состояния (если silent = False)
     """
 
+  async def _onFinishBeforeFinishSubstate(self, status: Any = None):
+    """
+    Вызывается при завершении состояния
+    """
+
   async def _onFinish(self, status: Any = None):
     """
     Вызывается при завершении состояния
@@ -481,8 +474,13 @@ class TgState(Notifier):
       self.scheduleMessageDeletion(m, duration)
     return messages
 
-  async def delete(self, m: Message):
-    await self.tg.delete_message(chat_id=m.chat.id, message_id=m.message_id)
+  def findSubstateByType(self, type) -> Optional[Any]:  # TgState
+    substate = self._substate
+    while substate is not None:
+      if isinstance(substate, type):
+        return substate
+      substate = substate._substate
+    return None
 
   def printStateTrace(self, forward: bool = False):
     if forward:

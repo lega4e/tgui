@@ -4,12 +4,12 @@ from typing import Callable, Optional
 
 from telebot.async_telebot import AsyncTeleBot
 
-from tgui.src.constructor.models.validator_types import ValidatorDescription, ValidatorType
-from tgui.src.domain.destination import TgDestination
-from tgui.src.domain.emoji import Emoji
+from tgui.src.constructor.models.validator_types import ValidatorDescription, \
+  ValidatorType
 from tgui.src.domain.piece import Pieces, P
-from tgui.src.domain.validators import Validator, ValidatorObject, FunctionValidator
-from tgui.src.logging.tg_logger import TgLogger
+from tgui.src.domain.destination import TgDestination
+from tgui.src.domain.validators import Validator, ValidatorObject, \
+  FunctionValidator
 
 
 class TgValidatorsFactory:
@@ -19,7 +19,7 @@ class TgValidatorsFactory:
     tg: AsyncTeleBot,
     destination: TgDestination,
     syslog: Logger,
-    tglog: TgLogger,
+    tglog: Logger,
   ):
     self.tg = tg
     self.destination = destination
@@ -36,9 +36,21 @@ class TgValidatorsFactory:
     elif validator.type == ValidatorType.STRING:
       return self.string(errorMessage)
     elif validator.type == ValidatorType.INTEGER:
-      return self.integer(errorMessage, validator.min, validator.max)
+      return self.integer(
+        errorMessage,
+        validator.min,
+        validator.max,
+        validator.minErrorMessage,
+        validator.maxErrorMessage,
+      )
     elif validator.type == ValidatorType.FLOAT:
-      return self.floating(errorMessage, validator.min, validator.max)
+      return self.floating(
+        errorMessage,
+        validator.min,
+        validator.max,
+        validator.minErrorMessage,
+        validator.maxErrorMessage,
+      )
     elif validator.type == ValidatorType.MESSAGE_WITH_TEXT:
       return self.messageWithText(errorMessage)
     else:
@@ -51,18 +63,12 @@ class TgValidatorsFactory:
       error=err,
     ))
 
-  def string(
-    self,
-    err: Pieces,
-    maxlen: Optional[int] = None,
-    errMaxLen: Optional[Pieces] = None,
-  ) -> Validator:
+  def string(self, err: Pieces) -> Validator:
 
     def validate(o: ValidatorObject):
       if o.message.text is None or len(o.message.text) == 0:
-        return self._error(o, err)
-      elif maxlen is not None and len(o.message.text) > maxlen:
-        return self._error(o, errMaxLen or err)
+        o.success = False
+        o.error = err
       else:
         o.data = o.message.text
       return o
@@ -72,18 +78,22 @@ class TgValidatorsFactory:
   def integer(
     self,
     err: Pieces,
-    min: Optional[int] = None,
-    max: Optional[int] = None,
+    min: Optional[int],
+    max: Optional[int],
+    minErr: Optional[Pieces] = None,
+    maxErr: Optional[Pieces] = None,
   ) -> Validator:
 
     def validate(o: ValidatorObject):
       o.data = o.message.text
-      if re.match(r'^-?\d+$', o.data):
-        o.data = int(o.data)
-        if (min is None or o.data >= min) and (max is None or o.data <= max):
-          return o
-      o.success = False
-      o.error = err
+      if not re.match(r'^-?\d+$', o.data):
+        return self._error(o, err)
+      o.data = int(o.data)
+
+      if min is not None and o.data < min:
+        return self._error(o, minErr or err)
+      elif max is not None and o.data > max:
+        return self._error(o, maxErr or err)
       return o
 
     return self._handleExceptionWrapper(validate)
@@ -91,18 +101,22 @@ class TgValidatorsFactory:
   def floating(
     self,
     err: Pieces,
-    min: Optional[float] = None,
-    max: Optional[float] = None,
+    min: Optional[int],
+    max: Optional[int],
+    minErr: Optional[Pieces] = None,
+    maxErr: Optional[Pieces] = None,
   ) -> Validator:
 
     def validate(o: ValidatorObject):
       o.data = o.message.text
-      if re.match(r'^-?\d+(\.\d+)?$', o.data):
-        o.data = float(o.data)
-        if (min is None or o.data >= min) and (max is None or o.data <= max):
-          return o
-      o.success = False
-      o.error = err
+      if not re.match(r'^-?\d+(\.\d+)?$', o.data):
+        return self._error(o, err)
+      o.data = float(o.data)
+
+      if min is not None and o.data < min:
+        return self._error(o, minErr or err)
+      elif max is not None and o.data > max:
+        return self._error(o, maxErr or err)
       return o
 
     return self._handleExceptionWrapper(validate)
@@ -133,7 +147,7 @@ class TgValidatorsFactory:
         o.success = False
         o.error = P(
           'Something went wrong while checking the value. Error text: ',
-          emoji=Emoji.FAIL,
+          emoji='fail',
         ) + P(str(e), types='code')
         self.tglog.error(e, exc_info=e)
       return o

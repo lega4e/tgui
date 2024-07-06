@@ -124,3 +124,4 @@ class Emoji:
   SQUARE = '⏹️'
   POOP = '💩'
   CHEQUE = '🧾'
+  BELL = '🔔'

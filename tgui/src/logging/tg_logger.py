@@ -22,7 +22,7 @@ class TgLogger(Logger):
     tgFmt: str,
     tgTimestampFmt: str,
     tgIgnoreList: List[str],
-    chats: [TgDestination],
+    chats: List[TgDestination],
     systemLogger: Logger = None,
     sysIgnoreList: Optional[List[str]] = None,
   ):
