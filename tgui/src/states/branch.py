@@ -9,8 +9,8 @@ from telebot.types import InlineKeyboardMarkup, \
 
 from tgui.src.domain.destination import TgDestination
 from tgui.src.domain.piece import Pieces
-from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, CallbackSourceType, CallbackQueryAnswer, \
-  CallbackQueryManager
+from tgui.src.managers.callback_query_manager import CallbackQueryIdentifier, \
+  CallbackSourceType, CallbackQueryAnswer, CallbackQueryManager
 from tgui.src.mixin.tg_message_translate_mixin import TgTranslateToMessageMixin
 from tgui.src.states.tg_state import TgState, KeyboardAction
 from tgui.src.utils.send_message import TgMediaType
@@ -80,6 +80,9 @@ class BranchButton:
     )
 
 
+BranchKeyboard = Union[KeyboardAction, List[List[BranchButton]]]
+
+
 class TgBranchState(TgState, TgTranslateToMessageMixin):
   """
   Сообщение в телеграмме, под которым есть кнопки; нажав на любую из кнопок
@@ -132,7 +135,7 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
       destination: TgDestination,
       callbackManager: CallbackQueryManager,
       messageGetter: Callable,  # -> BranchMessage (maybe async)
-      buttonsGetter: Callable,  # -> [[BranchButton]] (maybe async)
+      buttonsGetter: Callable,  # -> BranchKeyboard (maybe async)
   ):
     TgState.__init__(self, tg=tg, destination=destination)
     TgTranslateToMessageMixin.__init__(self)
@@ -140,7 +143,7 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
     self._buttonsGetter = buttonsGetter
     self._messageGetter = messageGetter
     self._callbackManager = callbackManager
-    self._buttons: List[List[BranchButton]] = []
+    self._buttons: Union[KeyboardAction, List[List[BranchButton]]] = []
     self._beforeTranslationCallback: Optional[Callable] = None
     self._clearButtonsOnFinish: bool = False
     self._clearButtonsOnFinishIfLeaf: bool = False
@@ -161,6 +164,9 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
 
   # SERVICE METHODS
   def _makeKeyboardAction(self) -> Optional[KeyboardAction]:
+    if isinstance(self._buttons, KeyboardAction) or self._buttons is None:
+      return self._buttons
+
     markup = InlineKeyboardMarkup()
     for row in self._buttons:
       markup.add(
@@ -176,6 +182,9 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
     return KeyboardAction.set(markup)
 
   def _freeButtons(self):
+    if isinstance(self._buttons, KeyboardAction):
+      return
+
     for row in self._buttons or []:
       for button in row:
         identifier = button.identifier(self.destination.chatId)
@@ -208,6 +217,8 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
         await self.pop()
 
   def _registerButtons(self):
+    if isinstance(self._buttons, KeyboardAction):
+      return
 
     def makeAction(btn: BranchButton):
       return lambda _: self._executeAction(btn.action)

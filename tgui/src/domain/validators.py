@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import copy
-from typing import Callable, Union
+from typing import Callable, Union, List
 
 from lega4e_library.asyncio.utils import maybeAwait
 from telebot.types import Message
@@ -52,3 +52,16 @@ class FunctionValidator(Validator):
 
   async def _validate(self, o: ValidatorObject) -> ValidatorObject:
     return await maybeAwait(self.function(o))
+
+
+class ChainValidator(Validator):
+
+  def __init__(self, validators: List[Validator]):
+    self.validators = validators
+
+  async def _validate(self, o: ValidatorObject) -> ValidatorObject:
+    for validator in self.validators:
+      o = await validator.validate(o)
+      if not o.success:
+        break
+    return o

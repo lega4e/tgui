@@ -6,9 +6,9 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.types import Message
 
 from tgui.src.domain.destination import TgDestination
-from tgui.src.domain.piece import Pieces
+from tgui.src.domain.piece import Pieces, P
 from tgui.src.managers.callback_query_manager import CallbackQueryManager
-from tgui.src.states.branch import BranchButtonAction, BranchButton, BranchMessage
+from tgui.src.states.branch import BranchButtonAction, BranchMessage
 from tgui.src.states.paging import TgPagingState
 
 
@@ -19,21 +19,9 @@ class TgRefListState(TgPagingState):
     tg: AsyncTeleBot,
     destination: TgDestination,
     callbackManager: CallbackQueryManager,
-    getItems: Callable[[], List[Any]],
+    getItems: Callable[[], Union[List[Any], Coroutine]],
     itemBuilder: Callable[[Any, str], Pieces],
-    nextButtonTitle: str,
-    prevButtonTitle: str,
     actionGetter: Callable[[Any], Union[BranchButtonAction, Coroutine]],
-    botName: str,
-    headBuilder: Optional[Callable[[int], Pieces]] = None,
-    tailBuilder: Optional[Callable[[int], Pieces]] = None,
-    onEmptyBuilder: Optional[Callable[[], Pieces]] = None,
-    elementsByPage: int = 15,
-    initialPageNum: int = 0,
-    backButton: Optional[BranchButton] = None,
-    getLeadButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
-    getTrailButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
-    startArgName: str = 'ref_list',
   ):
     TgPagingState.__init__(
       self,
@@ -42,40 +30,67 @@ class TgRefListState(TgPagingState):
       callbackManager=callbackManager,
       pageCount=1,
       pageBuilder=self.buildPage,
-      nextButtonTitle=nextButtonTitle,
-      prevButtonTitle=prevButtonTitle,
-      backButton=backButton,
-      initialPageNum=initialPageNum,
-      getLeadButtons=getLeadButtons,
-      getTrailButtons=getTrailButtons,
     )
     self.configureBranchState(self._update)
     self._getItems = getItems
-    self._elementsByPage = elementsByPage
     self._itemBuilder = itemBuilder
-    self._headBuilder = headBuilder
-    self._tailBuilder = tailBuilder
-    self._onEmptyBuilder = onEmptyBuilder
     self._actionGetter = actionGetter
-    self._botName = botName
-    self._startArgName = startArgName
+    self._elementsPerPage = 15
+    self._headBuilder = None
+    self._tailBuilder = None
+    self._onEmptyBuilder = lambda: P('Empty')
+    self._botName = None
+    self._startArgName = None
     self._items = None
 
-  def updateItemsCount(self, count: int):
-    self.updatePageCount((count - 1) // self._elementsByPage + 1)
+  def configureRefListState(
+    self,
+    headBuilder: Optional[Callable[[int, int], Pieces]] = None,
+    tailBuilder: Optional[Callable[[int, int], Pieces]] = None,
+    onEmptyBuilder: Optional[Callable[[], Pieces]] = None,
+    botName: Optional[str] = None,
+    startArgName: Optional[str] = None,
+    elementsPerPage: Optional[int] = None,
+  ):
+    if headBuilder is not None:
+      self._headBuilder = headBuilder
 
-  async def buildPage(self, num: int) -> BranchMessage:
-    ebp = self._elementsByPage
-    items = self._items[num * ebp:(num + 1) * ebp]
-    head, tail = None, None
+    if tailBuilder is not None:
+      self._tailBuilder = tailBuilder
+
+    if onEmptyBuilder is not None:
+      self._onEmptyBuilder = onEmptyBuilder
+
+    if botName is not None:
+      self._botName = botName
+
+    if startArgName is not None:
+      self._startArgName = startArgName
+
+    if elementsPerPage is not None:
+      self._elementsPerPage = elementsPerPage
+      
+    return self
+
+  def updateItemsCount(self, count: int):
+    self.updatePageCount((count - 1) // self._elementsPerPage + 1)
+
+  async def buildPage(self, num: int, count: int) -> BranchMessage:
+    epp = self._elementsPerPage
+    items = self._items[num * epp:(num + 1) * epp]
+    head, tail, url = None, None, None
     if self._headBuilder is not None:
-      head = await maybeAwait(self._headBuilder(num))
+      head = await maybeAwait(self._headBuilder(num, count))
     if self._tailBuilder is not None:
-      tail = await maybeAwait(self._tailBuilder(num))
-    startArgName = f't.me/{self._botName}?start={self._startArgName}_%i'
+      tail = await maybeAwait(self._tailBuilder(num, count))
+    if self._botName is not None and self._startArgName is not None:
+      url = f't.me/{self._botName}?start={self._startArgName}_%i'
     items = [
-      await maybeAwait(self._itemBuilder(item, startArgName % i))
-      for i, item in enumerate(items)
+      await
+      maybeAwait(self._itemBuilder(
+        item,
+        url % i if url is not None else None,
+      )) for i, item in enumerate(items)
     ]
     if len(items) == 0:
       items = [await maybeAwait(self._onEmptyBuilder())]
@@ -90,16 +105,19 @@ class TgRefListState(TgPagingState):
       ))
 
   async def _handleCommand(self, m: Message) -> bool:
+    if self._botName is None or self._startArgName is None:
+      return False
+
     if m.text.startswith(f'/start {self._startArgName}_'):
       itemIndex = int(m.text.split(f'{self._startArgName}_')[1])
-      item = self._items[self._pageNum * self._elementsByPage:][itemIndex]
+      item = self._items[self._pageNum * self._elementsPerPage:][itemIndex]
       await self.delete(m)
-      await self._proccessAction(item)
+      await self._processAction(item)
       return True
 
     return False
 
-  async def _proccessAction(self, item: Any):
+  async def _processAction(self, item: Any):
     action = await maybeAwait(self._actionGetter(item))
     await self._executeAction(action)
 

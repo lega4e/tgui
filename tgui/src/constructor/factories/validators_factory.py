@@ -72,8 +72,8 @@ class TgValidatorsFactory:
   def integer(
     self,
     err: Pieces,
-    min: Optional[int],
-    max: Optional[int],
+    min: Optional[int] = None,
+    max: Optional[int] = None,
   ) -> Validator:
 
     def validate(o: ValidatorObject):
@@ -91,8 +91,8 @@ class TgValidatorsFactory:
   def floating(
     self,
     err: Pieces,
-    min: Optional[float],
-    max: Optional[float],
+    min: Optional[float] = None,
+    max: Optional[float] = None,
   ) -> Validator:
 
     def validate(o: ValidatorObject):

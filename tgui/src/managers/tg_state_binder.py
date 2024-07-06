@@ -47,10 +47,9 @@ class TgStateBinder:
     self._stateGetter = stateGetter
     self._callbackQueryManager = callbackQueryManager
     self._ignoreGroups = ignoreGroups
-    self._tasks = list()
 
   def _task(self, coro: Coroutine):
-    self._tasks.append(asyncio.create_task(coro))
+    asyncio.create_task(coro)
 
   async def addCommandsToMenu(self):
     await self._tg.set_my_commands([

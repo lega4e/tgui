@@ -16,53 +16,64 @@ class TgListState(TgPagingState):
     tg: AsyncTeleBot,
     destination: TgDestination,
     callbackManager: CallbackQueryManager,
-    getItems: Callable[[], List[Any]],
+    getItems: Callable[[], Union[Coroutine, List[Any]]],
     pageBuilder: Callable[[int], Union[BranchMessage, Coroutine]],
-    nextButtonTitle: str,
-    prevButtonTitle: str,
     getButton: Optional[Callable[[Any], BranchButton]],
     pageBuilderOnChoice: Optional[Callable[
-      [int, Any],
+      [int, int, Any],
       Union[BranchMessage, Coroutine],
     ]] = None,
-    rows: int = 5,
-    cols: int = 1,
-    initialPageNum: int = 0,
-    backButton: Optional[BranchButton] = None,
-    getLeadButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
-    getMidButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
-    getTrailButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
   ):
     TgPagingState.__init__(
       self,
       tg=tg,
       destination=destination,
       callbackManager=callbackManager,
-      pageCount=(len(getItems()) - 1) // (rows * cols) + 1,
+      pageCount=1,
       pageBuilder=self.buildPage,
-      nextButtonTitle=nextButtonTitle,
-      prevButtonTitle=prevButtonTitle,
-      backButton=backButton,
-      initialPageNum=initialPageNum,
-      getLeadButtons=self.buildLeadButtons,
-      getTrailButtons=getTrailButtons,
     )
+    self.configureBranchState(self._update)
+    self._rows = 5
+    self._cols = 1
+    self._items = []
     self._getItems = getItems
-    self._rows = rows
-    self._cols = cols
     self._pageListBuilder = pageBuilder
     self._pageBuilderOnChoice = pageBuilderOnChoice
     self._getButton = getButton
-    self._getLeadListButtons = getLeadButtons or (lambda _: [])
-    self._getMidListButtons = getMidButtons or (lambda _: [])
-    self._choicedItem = None
+    self._getLeadListButtons = lambda _, __: []
+    self._getMidButtons = lambda _, __: []
+    self._chosenItem = None
+    self.configurePagingState(getLeadButtons=self.buildLeadButtons)
+
+  def configureListState(
+    self,
+    getMidButtons: Optional[Callable[[int], List[List[BranchButton]]]] = None,
+    rows: Optional[int] = None,
+    cols: Optional[int] = None,
+  ):
+    if rows is not None:
+      self._rows = rows
+
+    if cols is not None:
+      self._cols = cols
+
+    if getMidButtons is not None:
+      self._getMidButtons = getMidButtons
+
+    return self
+
+  def configurePagingState(self, **kwargs):
+    if kwargs.get('getLeadButtons'):
+      self._getLeadListButtons = kwargs.get('getLeadButtons')
+      del kwargs['getLeadButtons']
+
+    return super().configurePagingState(**kwargs)
 
   def updateItemsCount(self, count: int):
     self.updatePageCount((count - 1) // (self._rows * self._cols) + 1)
 
-  def buildLeadButtons(self, num: int) -> List[List[BranchButton]]:
-    buttons = []
-    buttons += self._getLeadListButtons(num)
+  def buildLeadButtons(self, num: int, count: int) -> List[List[BranchButton]]:
+    buttons = self._getLeadListButtons(num, count)
 
     b, e = num * self._rows * self._cols, (num + 1) * self._rows * self._cols
     items = [self._makeButton(item) for item in self._getItems()[b:e]]
@@ -72,16 +83,21 @@ class TgListState(TgPagingState):
         break
       buttons.append(itms)
 
-    buttons += self._getMidListButtons(num)
+    buttons += self._getMidButtons(num, count)
     return buttons
 
-  async def buildPage(self, num: int) -> BranchMessage:
-    if self._choicedItem is not None and self._pageBuilderOnChoice is not None:
-      return await maybeAwait(self._pageBuilderOnChoice(num, self._choicedItem))
+  async def buildPage(self, num: int, count: int) -> BranchMessage:
+    if self._chosenItem is not None and self._pageBuilderOnChoice is not None:
+      return await maybeAwait(
+        self._pageBuilderOnChoice(
+          num,
+          count,
+          self._chosenItem,
+        ))
     return await maybeAwait(self._pageListBuilder(num))
 
   async def choiceItem(self, item: Any):
-    self._choicedItem = item
+    self._chosenItem = item
     await self.translateMessage()
 
   def _makeButton(self, item: Any) -> BranchButton:
@@ -89,3 +105,7 @@ class TgListState(TgPagingState):
     if self._pageBuilderOnChoice is not None:
       button.action = lambda: self.choiceItem(item)
     return button
+
+  async def _update(self):
+    self._items = await maybeAwait(self._getItems())
+    self.updatePageCount(len(self._items))
