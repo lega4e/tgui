@@ -59,8 +59,10 @@ class TgState(Notifier):
   """
   Представляет собой состояние, в котором находится телеграм бот. Позволяет:
   - установить события на вход и выход из состояния;
-  - установить обработчики сообщений и запросов (перегрузите соответствующие функции)
-  - устанавливать подсостояния, которым будет делегировать обработка сообщений и запросов
+  - установить обработчики сообщений и запросов (перегрузите соответствующие
+    функции)
+  - устанавливать подсостояния, которым будет делегировать обработка сообщений
+    и запросов
   """
   ON_START_STATE_EVENT = 'ON_START_STATE_EVENT'
   ON_ENTER_STATE_EVENT = 'ON_ENTER_STATE_EVENT'
@@ -232,7 +234,7 @@ class TgState(Notifier):
     """
     if self._parentState is not None:
       self._parentState.notify(event=TgState.ON_RETURN_FROM_POPPED_STATE_EVENT)
-      parentState = self._parentState
+      parentState: TgState = self._parentState
       await parentState.finishSubstate(status)
       await parentState._onReturnFromPoppedState(status, self)
 
@@ -257,16 +259,35 @@ class TgState(Notifier):
     """
     Установка подсостояния
 
-    :param finishDeatched: завершать ли отсоединённые состояния
-    :param state: подстотояние
-    :param silent: вызывать ли start у подсостояния
-    :param status: статус завершения подсостояния
+    :param finishDeatched: Завершать ли отсоединённые состояния.
+    :param state: Подстотояние (extends TgState).
+    :param silent: Вызывать ли start у подсостояния.
+    :param status: Статус завершения подсостояния.
     """
     await self.finishSubstate(status, finishDetached=finishDeatched)
     self._substate = state
     self._substate._parentState = self
     await state.start(silent=silent)
     self.notify(event=TgState.ON_ENTER_SUBSTATE_EVENT)
+
+  async def replaceTgState(
+    self,
+    state,
+    silent: bool = False,
+    status: Any = None,
+  ):
+    """
+    Заменяет текущее подсостояние на указанное у родителя
+
+    :param state: Состояние, на которое нужно заменить текущее.
+    :param silent: Вызывать ли start у устанавливаемого подсостояния.
+    :param status: Статус завершения текущего состояния.
+    :return:
+    """
+    if self._parentState is None:
+      raise Exception("Can't replace tg state without parent")
+
+    await self._parentState.setTgState(state, silent=silent, status=status)
 
   def _resetTgState(self):
     """
@@ -278,10 +299,11 @@ class TgState(Notifier):
 
   async def handleMessage(self, m: Message) -> bool:
     """
-    Обрабатывает сообщение (можно перегрузить метод _handleMessageBefore в дочернем классе,
-    чтобы перехватить обработку; если этот метод возвратет True, то на этом обработка сообщения
-    завершится). Если есть подсостояние, то в первую очередь происходит попытка обработать
-    сообщение с помощью подсостояния.
+    Обрабатывает сообщение (можно перегрузить метод _handleMessageBefore в
+    дочернем классе, чтобы перехватить обработку; если этот метод возвратет
+    True, то на этом обработка сообщения завершится). Если есть подсостояние,
+    то в первую очередь происходит попытка обработать сообщение с помощью
+    подсостояния.
 
     :param m: Сообщение, которое нужно обработать
     :return: было ли обработано состояние
@@ -298,10 +320,11 @@ class TgState(Notifier):
 
   async def handleCommand(self, m: Message) -> bool:
     """
-    Обрабатывает команду (можно перегрузить метод _handleCommandBefore в дочернем классе,
-    чтобы перехватить обработку; если этот метод возвратет True, то на этом обработка команды
-    завершится). Если есть подсостояние, то в первую очередь происходит попытка обработать
-    сообщение с помощью подсостояния.
+    Обрабатывает команду (можно перегрузить метод _handleCommandBefore в
+    дочернем классе, чтобы перехватить обработку; если этот метод возвратет
+    True, то на этом обработка команды завершится). Если есть подсостояние,
+    то в первую очередь происходит попытка обработать сообщение с помощью
+    подсостояния.
 
     :param m: Команда, которую нужно обработать
     :return: была ли обработана команда
@@ -475,7 +498,7 @@ class TgState(Notifier):
     return messages
 
   def findSubstateByType(self, type) -> Optional[Any]:  # TgState
-    substate = self._substate
+    substate: TgState = self._substate
     while substate is not None:
       if isinstance(substate, type):
         return substate
@@ -499,21 +522,25 @@ class TgState(Notifier):
   def _setDataToParentsAndMyself(self, **kwargs):
     for key, value in kwargs.items():
       self._tgStateData[key] = value
+    self._parentState: TgState
     if self._parentState is not None:
       self._parentState._setDataToParentsAndMyself(**kwargs)
 
   def _setDataToParents(self, **kwargs):
+    self._parentState: TgState
     if self._parentState is not None:
       self._parentState._setDataToParentsAndMyself(**kwargs)
 
   def _setDataToChildrensAndMyself(self, **kwargs):
     for key, value in kwargs.items():
       self._tgStateData[key] = value
+    self._substate: TgState
     if self._substate is not None:
       self._substate._setDataToChildrensAndMyself(**kwargs)
 
   def _setDataToChildrens(self, **kwargs):
     if self._substate is not None:
+      self._substate: TgState
       self._substate._setDataToChildrensAndMyself(**kwargs)
 
   @staticmethod

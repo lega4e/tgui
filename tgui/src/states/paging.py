@@ -7,6 +7,7 @@ from telebot.async_telebot import AsyncTeleBot
 from tgui.src.domain.destination import TgDestination
 from tgui.src.domain.emoji import Emoji
 from tgui.src.managers.callback_query_manager import CallbackQueryManager
+from tgui.src.managers.dont_press_egg import DontPressEgg
 from tgui.src.states.branch import TgBranchState, BranchMessage, BranchButton, \
   BranchButtonAction, BranchKeyboard
 
@@ -38,6 +39,7 @@ class TgPagingState(TgBranchState):
     self._pageCount = pageCount
     self._pageBuilder = pageBuilder
     self._pageNum = 0
+    self._egg = DontPressEgg()
 
   def configurePagingState(
     self,
@@ -93,17 +95,28 @@ class TgPagingState(TgBranchState):
     return self._pageNum
 
   def _buildButtons(self) -> BranchKeyboard:
+
+    async def next():
+      self._egg.next()
+      await self.translateMessage()
+
+    egg = self._egg.value()
+    haveNext = self._pageNum + 1 < self._pageCount
+    havePrev = self._pageNum > 0
+    showNextButton = self._pageCount > 1 and (haveNext or egg is not None)
+    showPrevButton = self._pageCount > 1 and (havePrev or egg is not None)
     nav = nn([
       BranchButton(
-        self._prevButtonTitle if self._pageNum > 0 else Emoji.SQUARE,
-        self._onPrevButton,
-      ) if self._pageCount > 1 else None,
+        self._prevButtonTitle if havePrev else ' ',
+        self._onPrevButton if havePrev else next,
+        answer=None if havePrev else egg,
+      ) if showPrevButton else None,
       self._middleButton,
       BranchButton(
-        self._nextButtonTitle \
-          if self._pageNum + 1 < self._pageCount else Emoji.SQUARE,
-        self._onNextButton,
-      ) if self._pageCount > 1 else None,
+        self._nextButtonTitle if haveNext else ' ',
+        self._onNextButton if haveNext else next,
+        answer=None if haveNext else egg,
+      ) if showNextButton else None,
     ])
 
     return self._getLeadButtons(self._pageNum, self._pageCount) + \
