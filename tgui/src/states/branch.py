@@ -49,6 +49,7 @@ class BranchButton:
     url: Optional[str] = None,
     answer: Optional[str] = None,
     logMessage: Optional[str] = None,
+    showAlert: bool = False,
   ):
     """
     :param title: Строка, которая будет отображатся на кнопке
@@ -64,6 +65,7 @@ class BranchButton:
     self.answer = answer
     self.logMessage = logMessage
     self.data = str(random.random())
+    self.showAlert = showAlert
 
   def identifier(self, chatId: int) -> CallbackQueryIdentifier:
     return CallbackQueryIdentifier(
@@ -77,6 +79,7 @@ class BranchButton:
       action=action,
       logMessage=self.logMessage or f'Выбрано «{self.title}»',
       answerText=self.answer or f'Выбрано «{self.title}»',
+      showAlert=self.showAlert,
     )
 
 
@@ -101,6 +104,7 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
     await self.translateMessage()
 
   async def _onFinish(self, _: Any = None):
+    self._parentState: TgState
     self._freeButtons()
     if self._clearButtonsOnFinish:
       await self.translateMessage(buttons=False)
