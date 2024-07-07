@@ -110,14 +110,12 @@ class TgPagingState(TgBranchState):
         self._prevButtonTitle if havePrev else ' ',
         self._onPrevButton if havePrev else next,
         answer=None if havePrev else egg,
-        showAlert=not havePrev,
       ) if showPrevButton else None,
       self._middleButton,
       BranchButton(
         self._nextButtonTitle if haveNext else ' ',
         self._onNextButton if haveNext else next,
         answer=None if haveNext else egg,
-        showAlert=not haveNext,
       ) if showNextButton else None,
     ])
 
