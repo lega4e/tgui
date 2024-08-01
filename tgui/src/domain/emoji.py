@@ -125,3 +125,4 @@ class Emoji:
   POOP = '💩'
   CHEQUE = '🧾'
   BELL = '🔔'
+  TOP = '🏆'

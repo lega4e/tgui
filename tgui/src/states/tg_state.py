@@ -168,7 +168,7 @@ class TgState(Notifier):
 
     async def removeMessage():
       await asyncio.sleep(duration)
-      await self.tg.delete_message(m.chat.id, m.message_id)
+      await self.delete(m)
 
     asyncio.create_task(removeMessage())
 
@@ -496,6 +496,9 @@ class TgState(Notifier):
     for m in messages:
       self.scheduleMessageDeletion(m, duration)
     return messages
+
+  async def delete(self, m: Message):
+    await self.tg.delete_message(m.chat.id, m.message_id)
 
   def findSubstateByType(self, type) -> Optional[Any]:  # TgState
     substate: TgState = self._substate

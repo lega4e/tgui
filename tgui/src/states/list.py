@@ -43,7 +43,7 @@ class TgListState(TgPagingState):
     self._getLeadListButtons = lambda _, __: []
     self._getMidButtons = lambda _, __: []
     self._chosenItem = None
-    self.configurePagingState(getLeadButtons=self.buildLeadButtons)
+    super().configurePagingState(getLeadButtons=self.buildLeadButtons)
 
   def configureListState(
     self,
