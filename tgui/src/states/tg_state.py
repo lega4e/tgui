@@ -449,6 +449,7 @@ class TgState(Notifier):
     self,
     text,
     translateToMessageId: Optional[int] = None,
+    replyToMessageId: Optional[int] = None,
     keyboardAction: Optional[KeyboardAction] = None,
     collectMessage: bool = True,
     **kwargs,
@@ -468,7 +469,10 @@ class TgState(Notifier):
 
     value = await send_message(
       tg=self.tg,
-      chat=self.destination.copyWith(translateToMessageId=translateToMessageId),
+      chat=self.destination.copyWith(
+        translateToMessageId=translateToMessageId,
+        replyToMessageId=replyToMessageId,
+      ),
       text=text,
       replyMarkup=markup,
       **kwargs,

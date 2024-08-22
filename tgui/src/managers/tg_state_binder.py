@@ -164,14 +164,14 @@ def handle_{command.name}(user, m, __):
   def _logMessageDecorator(self, func):
 
     async def wrapper(m: Message, res=False):
-      if m.chat.id > 0:
+      if not self._ignoreGroups or m.chat.id > 0:
         message = (P(f'{TgLoggerWrapper.textPrefix(m)}') + '\n' +
                    Pieces.fromMessage(
                      m.text or m.caption or 'None',
                      m.entities or m.caption_entities or [],
                    ))
         self._logger.message(message, header=False)
-        func(m, res)
+      func(m, res)
 
     return wrapper
 
