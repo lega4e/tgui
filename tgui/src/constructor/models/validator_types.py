@@ -12,6 +12,7 @@ class ValidatorType(enum.StrEnum):
   LOCATION_ENTITY = 'location_entity'
   LOCATION_TEXT = 'location_text'
   LOCATION = 'location'
+  EMAIL = 'email'
   MESSAGE_WITH_TEXT = 'message_with_text'
   MULTIPLE_CHOICE_COUNT = 'multiple_choice_count'
 
@@ -27,6 +28,7 @@ class ValidatorType(enum.StrEnum):
       # ValidatorType.LOCATION_TEXT,
       # ValidatorType.LOCATION,
       ValidatorType.MESSAGE_WITH_TEXT,
+      ValidatorType.EMAIL,
     ]
 
 
@@ -38,7 +40,9 @@ class ValidatorDescription:
     **kwargs,
   ):
     self.type = type
-    if type == ValidatorType.INTEGER:
+    if type == ValidatorType.STRING:
+      pass
+    elif type == ValidatorType.INTEGER:
       self.min = kwargs.get('min', None)
       self.minErrorMessage = kwargs.get('minErrorMessage', None)
       self.max = kwargs.get('max', None)
@@ -53,5 +57,7 @@ class ValidatorDescription:
       self.minErrorMessage = kwargs.get('minErrorMessage', None)
       self.max = kwargs.get('max', None)
       self.maxErrorMessage = kwargs.get('maxErrorMessage', None)
+    elif type == ValidatorType.EMAIL:
+      pass
     elif type not in ValidatorType.values():
       raise ValueError(f'Invalid validator type: {type}')

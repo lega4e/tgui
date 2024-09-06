@@ -25,6 +25,8 @@ class TgValidatorsFactory:
     self.destination = destination
     self.syslog = syslog
     self.tglog = tglog
+    self._emailRegex = re.compile(
+      r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
   def get(
     self,
@@ -51,6 +53,8 @@ class TgValidatorsFactory:
         validator.minErrorMessage,
         validator.maxErrorMessage,
       )
+    elif validator.type == ValidatorType.EMAIL:
+      return self.email(errorMessage)
     elif validator.type == ValidatorType.MESSAGE_WITH_TEXT:
       return self.messageWithText(errorMessage)
     else:
@@ -117,6 +121,20 @@ class TgValidatorsFactory:
         return self._error(o, minErr or err)
       elif max is not None and o.data > max:
         return self._error(o, maxErr or err)
+      return o
+
+    return self._handleExceptionWrapper(validate)
+
+  def email(self, err: Pieces) -> Validator:
+
+    def validate(o: ValidatorObject):
+      if o.message.text is None or len(o.message.text) == 0:
+        return self._error(o, err)
+
+      if not re.match(self._emailRegex, o.message.text):
+        return self._error(o, err)
+
+      o.data = o.message.text
       return o
 
     return self._handleExceptionWrapper(validate)
