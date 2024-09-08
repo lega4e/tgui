@@ -39,12 +39,13 @@ class TgFormState(TgState, TgExecutableMixin):
       pass
 
   def __init__(
-      self,
-      tg: AsyncTeleBot,
-      destination: TgDestination,
-      fieldsFactory: Any,  # TgInputFieldsFactory,
-      elements: List[FormTgElement],
-      checkCustomCondition: Optional[Callable] = None,  # maybe await
+    self,
+    tg: AsyncTeleBot,
+    destination: TgDestination,
+    fieldsFactory: Any,  # TgInputFieldsFactory,
+    elements: List[FormTgElement],
+    checkCustomCondition: Optional[Callable] = None,  # maybe await
+    values: Optional[Dict[str, Any]] = None,
   ):
     from tgui.src.constructor.factories.fields_factory import \
       TgInputFieldsFactory
@@ -52,7 +53,7 @@ class TgFormState(TgState, TgExecutableMixin):
     TgState.__init__(self, tg=tg, destination=destination)
     TgExecutableMixin.__init__(self)
     self._fields: TgInputFieldsFactory = fieldsFactory
-    self._values: Dict[str, Any] = dict()
+    self._values: Dict[str, Any] = values or dict()
     self._elements = elements
     self._checkCustomCondition = checkCustomCondition
     self._cancelToken = f'{self.destination.chatId}-{random()}'

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, Dict
 
 from telebot.async_telebot import AsyncTeleBot
 
@@ -123,6 +123,7 @@ class TgInputFieldsFactory:
     self,
     form: FormTgItem,
     checkCustomCondition: Optional[Callable] = None,
+    values: Optional[Dict[str, Any]] = None,
   ) -> TgFormState:
     return TgFormState(
       tg=self.tg,
@@ -130,6 +131,7 @@ class TgInputFieldsFactory:
       fieldsFactory=self,
       elements=form.elements,
       checkCustomCondition=checkCustomCondition or self.checkCustomCondition,
+      values=values,
     )
 
   # SERVICE
