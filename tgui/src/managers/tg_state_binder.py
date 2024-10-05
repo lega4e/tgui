@@ -41,11 +41,13 @@ class TgStateBinder:
     stateGetter: Callable[[Message], TgState],
     callbackQueryManager: CallbackQueryManager,
     ignoreGroups: bool = True,
+    stateGetterByCallbackQuery: Callable[[CallbackQuery], TgState] = None,
   ):
     self._commands = commands
     self._tg = tg
     self._logger = logger
     self._stateGetter = stateGetter
+    self._stateGetterByCallbackQuery = stateGetterByCallbackQuery
     self._callbackQueryManager = callbackQueryManager
     self._ignoreGroups = ignoreGroups
 
@@ -123,6 +125,9 @@ def handle_{command.name}(user, m, __):
           ))
 
       if answer is None:
+        state = self._stateGetterByCallbackQuery(q)
+        if state is not None and await state.handleCallbackQuery(q):
+          return
         await self._tg.answer_callback_query(
           q.id,
           text='Эта кнопка недоступна',

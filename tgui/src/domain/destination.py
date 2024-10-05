@@ -4,6 +4,7 @@ from attr import define, field
 from attr.validators import instance_of
 
 from lega4e_library import jsonkin, Jsonkin
+from telebot.types import Message
 
 
 @jsonkin
@@ -63,6 +64,16 @@ class TgDestination(Jsonkin):
       translateToMessageId=translateToMessageId
       if translateToMessageId is not None else self.translateToMessageId,
       chatLogin=chatLogin if chatLogin is not None else self.chatLogin,
+    )
+
+  @staticmethod
+  def fromMessage(m: Message):
+    return TgDestination(
+      chatId=m.chat.id,
+      chatLogin=m.chat.username,
+      translateToMessageId=m.message_id,
+      replyToMessageId=m.reply_to_message.message_id
+      if m.reply_to_message is not None else None,
     )
 
 
