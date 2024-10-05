@@ -91,13 +91,9 @@ def handle_{command.name}(user, m, __):
   def addMessageHandlers(self):
 
     @self._tg.message_handler(content_types=[
-      'text',
-      'photo',
-      'video',
-      'audio',
-      'voice',
-      'location',
-      'contact',
+      'successful_payment', 'text', 'audio', 'document', 'photo', 'sticker',
+      'video', 'voice', 'video_note', 'contact', 'location', 'venue', 'poll',
+      'dice', 'animation', 'game', 'invoice'
     ])
     @self._logMessageDecorator
     def handle_message(m: Message, __=False):
