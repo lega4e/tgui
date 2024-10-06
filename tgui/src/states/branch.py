@@ -22,6 +22,7 @@ class BranchButtonAction:
   state: Optional[TgState] = None
   pop: bool = False
   update: bool = False
+  isTranslationState: bool = False
 
 
 @dataclass
@@ -214,7 +215,10 @@ class TgBranchState(TgState, TgTranslateToMessageMixin):
       if someAction.action is not None:
         await maybeAwait(someAction.action())
       elif someAction.state is not None:
-        await self.setTgState(someAction.state)
+        if someAction.isTranslationState:
+          await self.setTgTranslationState(someAction.state)
+        else:
+          await self.setTgState(someAction.state)
       if someAction.update:
         await self.translateMessage()
       if someAction.pop:
