@@ -42,6 +42,8 @@ class TgRefListState(TgPagingState):
     self._botName = None
     self._startArgName = None
     self._items = None
+    self._refListMedia = None
+    self._refListMediaType = None
 
   def configureRefListState(
     self,
@@ -51,6 +53,8 @@ class TgRefListState(TgPagingState):
     botName: Optional[str] = None,
     startArgName: Optional[str] = None,
     elementsPerPage: Optional[int] = None,
+    media: Any = None,
+    mediaType: Optional[str] = None,
   ):
     if headBuilder is not None:
       self._headBuilder = headBuilder
@@ -69,7 +73,13 @@ class TgRefListState(TgPagingState):
 
     if elementsPerPage is not None:
       self._elementsPerPage = elementsPerPage
-      
+
+    if media is not None:
+      self._refListMedia = media
+
+    if mediaType is not None:
+      self._refListMediaType = mediaType
+
     return self
 
   def updateItemsCount(self, count: int):
@@ -102,7 +112,10 @@ class TgRefListState(TgPagingState):
           rdc(lambda a, b: a + '\n' + b, nn(items, notEmpty=False)),
           tail,
         ]),
-      ))
+      ),
+      media=self._refListMedia,
+      mediaType=self._refListMediaType,
+    )
 
   async def _handleCommand(self, m: Message) -> bool:
     if self._botName is None or self._startArgName is None:

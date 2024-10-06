@@ -176,6 +176,23 @@ class TgState(Notifier):
     AsyncCompleter.cancelByToken(self._completerCancelToken)
     self._completerCancelToken = None
 
+  def completerWrapper(
+    self,
+    action: Callable,
+    finnaly: Optional[Callable] = None,
+  ):
+
+    async def wrapper():
+      try:
+        await maybeAwait(action())
+      except CompleterCanceledException:
+        pass
+      finally:
+        if finnaly is not None:
+          await maybeAwait(finnaly())
+
+    return wrapper
+
   async def start(self, silent: bool = False):
     """
     Должно быть вызвано при вхождении в состояние
@@ -503,6 +520,14 @@ class TgState(Notifier):
 
   async def delete(self, m: Message):
     await self.tg.delete_message(m.chat.id, m.message_id)
+
+  def findParentByType(self, type) -> Optional[Any]:  # TgState
+    parent: TgState = self._parentState
+    while parent is not None:
+      if isinstance(parent, type):
+        return parent
+      parent = parent._parentState
+    return None
 
   def findSubstateByType(self, type) -> Optional[Any]:  # TgState
     substate: TgState = self._substate
