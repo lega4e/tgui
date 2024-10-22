@@ -2,9 +2,9 @@
 import asyncio
 import enum
 from random import random
-from typing import Any, Optional, List, Callable, Tuple
+from typing import Any, Optional, List, Callable, Tuple, Union, BinaryIO
 
-from attr import define, field
+from attr import define, field, dataclass
 from attr.validators import instance_of
 from lega4e_library import Notifier
 from lega4e_library.asyncio.async_completer import CompleterCanceledException, \
@@ -18,7 +18,7 @@ from telebot.types import JsonSerializable, Message, ReplyKeyboardMarkup, \
 from tgui.src.domain.destination import TgDestination
 from tgui.src.domain.piece import Pieces
 from tgui.src.mixin.executable import TgExecutableMixin
-from tgui.src.utils.send_message import send_message
+from tgui.src.utils.send_message import send_message, TgMediaType
 
 
 @enum.unique
@@ -53,6 +53,19 @@ class KeyboardAction:
   @staticmethod
   def set(markup: JsonSerializable):
     return KeyboardAction(type=KeyboardActionType.SET, markup=markup)
+
+
+@dataclass
+class TgMedia:
+  type: TgMediaType
+  media: Optional[Union[str, BinaryIO, bytes]]
+
+
+@dataclass
+class TgMessage:
+  pieces: Pieces
+  media: List[TgMedia] = []
+  keyboardAction: Optional[KeyboardAction] = None
 
 
 class TgState(Notifier):
@@ -471,6 +484,13 @@ class TgState(Notifier):
     collectMessage: bool = True,
     **kwargs,
   ) -> List[Message]:
+    if isinstance(text, TgMessage):
+      if len(text.media) > 0:
+        kwargs['media'] = text.media[0].media
+        kwargs['mediaType'] = text.media[0].type
+      keyboardAction = text.keyboardAction
+      text = text.pieces
+
     markup = None
     if keyboardAction is not None:
       if keyboardAction.type == KeyboardActionType.CLEAR:

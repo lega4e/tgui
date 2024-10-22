@@ -105,22 +105,22 @@ class Pieces:
     entities = []
     for piece in self.pieces:
       text_length = _count_chars(piece.text)
-      if type not in piece.types:
+      if type not in piece.types or text_length == 0:
         pos += text_length
         continue
-      if (len(entities) != 0 and
-          entities[-1].offset + entities[-1].length == pos and
-          (type != 'text_link' or entities[-1].url == piece.url)):
-        entities[-1].length += text_length
-      else:
-        entities.append(
-          MessageEntity(
-            type=type,
-            offset=pos,
-            length=text_length,
-            url=piece.url,
-            language=piece.lang,
-          ))
+      # if (len(entities) != 0 and
+      #     entities[-1].offset + entities[-1].length == pos and
+      #     (type != 'text_link' or entities[-1].url == piece.url)):
+      #   entities[-1].length += text_length
+      # else:
+      entities.append(
+        MessageEntity(
+          type=type,
+          offset=pos,
+          length=text_length,
+          url=piece.url,
+          language=piece.lang,
+        ))
       pos += text_length
     return entities
 
