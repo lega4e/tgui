@@ -121,7 +121,9 @@ def handle_{command.name}(user, m, __):
           ))
 
       if answer is None:
-        state = self._stateGetterByCallbackQuery(q)
+        state = None
+        if self._stateGetterByCallbackQuery is not None:
+          state = self._stateGetterByCallbackQuery(q)
         if state is not None and await state.handleCallbackQuery(q):
           return
         await self._tg.answer_callback_query(

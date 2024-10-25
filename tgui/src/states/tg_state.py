@@ -447,6 +447,15 @@ class TgState(Notifier):
     """
     return False
 
+  async def _handleMessageBeforeForwardProp(self, _: Message) -> bool:
+    """
+    Обработка сообщения перед обработкой подсостоянием
+
+    :param _: сообщение, которое нужно обработать
+    :return: было ли обработано сообщение (следует ли остановить обработку?)
+    """
+    return False
+
   async def _handleMessage(self, _: Message) -> bool:
     """
     Обработка сообщения (уже после подсостояния)

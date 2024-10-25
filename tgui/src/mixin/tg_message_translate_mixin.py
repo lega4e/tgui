@@ -14,10 +14,10 @@ class TgTranslateToMessageMixin:
   def __init__(self):
     self._rootMessage = None
 
-    def getter() -> Message:
+    def getter() -> Optional[Message]:
       return self._rootMessage
 
-    def setter(m: Message):
+    def setter(m: Optional[Message]):
       self._rootMessage = m
 
     self.getMessage = getter
@@ -56,3 +56,7 @@ class TgTranslateToMessageMixin:
   @abstractmethod
   async def translateMessage(self):
     pass
+
+  async def retranslateMessage(self):
+    self.setMessage(None)
+    await self.translateMessage()
