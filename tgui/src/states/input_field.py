@@ -116,7 +116,7 @@ class TgInputField(TgBranchState, TgExecutableMixin):
     self,
     greeting: Optional[Union[Pieces, TgMessage]] = None,
     prepareMessages: Optional[List[TgMessage]] = None,
-    checkGreeting: Optional[Pieces] = None,
+    checkGreeting: Optional[Union[Callable[[Any], Pieces], Pieces]] = None,
     checkMessageGetter: Optional[Callable[[Any], TgMessage]] = None,
     checkSeparateMessage: Optional[TgMessage] = None,
     checkYesTitle: Optional[str] = None,
@@ -187,7 +187,12 @@ class TgInputField(TgBranchState, TgExecutableMixin):
       return
 
     if self._checkGreeting is not None:
-      await self.send(self._checkGreeting)
+      if isinstance(self._checkGreeting, Pieces):
+        await self.send(self._checkGreeting)
+      else:
+        message = await maybeAwait(self._checkGreeting(value))
+        if message is not None:
+          await self.send(await maybeAwait(self._checkGreeting(value)))
 
     m: TgMessage = await maybeAwait(self._checkMessageGetter(value))
     field = TgInputField(
